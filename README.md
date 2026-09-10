@@ -157,19 +157,9 @@ Final 50%-capped optimal allocation: **50% MSFT / 50% NVDA** (all other names at
 
 ---
 
-## Limitations
-
-* Survivorship bias due to focusing on the Magnificent 7
-* Historical performance may not represent future outcomes
-* Rebalancing backtest now includes a flat 5-bps-per-trade cost assumption, but does not model taxes, bid-ask spread, or market impact
-* Monte Carlo simulations assume constant drift and volatility (GBM), despite returns rejecting normality
-* Portfolio results depend on the selected historical period and on the 2021–2023/2024–2025 estimation-evaluation split chosen
-
----
-
 ## Contact
 
-**Aditya Singh Shekhawat | IIT Indore — Civil Engineering (Final Year)**
+**Aditya Singh Shekhawat | IIT Indore — (Final Year)**
 
 [![GitHub](https://img.shields.io/badge/GitHub-aditya1596-black)](https://github.com/aditya1596)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Aditya-blue)](https://www.linkedin.com/in/aditya-singh-shekhawat-934930288/)
