@@ -1,159 +1,133 @@
 # Magnificent 7 Portfolio Optimization & Risk Forecasting
 
-An end-to-end quantitative finance project analyzing the **Magnificent 7 stocks (AAPL, GOOG, META, AMZN, MSFT, NVDA, TSLA)** using portfolio theory, statistical analysis, and Monte Carlo simulation to evaluate performance, optimize allocation, and forecast downside risk.
+An end-to-end quantitative finance project analyzing the **Magnificent 7 stocks (AAPL, GOOG, META, AMZN, MSFT, NVDA, TSLA)** using descriptive risk analysis, CAPM, Modern Portfolio Theory, out-of-sample validation, and Monte Carlo simulation.
 
 ---
 
 ## Highlights
 
-* Achieved **~252.6% cumulative portfolio return** (equal-weight) over 5 years vs **~85.0% for the S&P 500** and **~104.7% for QQQ**
-* Fixed look-ahead bias with a proper **train/test split**: portfolio weights are estimated on 2021–2023 data and all evaluation (Monte Carlo, VaR, backtest) runs on a held-out 2024–2025 window
-* Constructed the **Efficient Frontier** using **20,000 simulated portfolios** under a 50% single-stock concentration cap
-* Performed **Monte Carlo simulations (10,000 paths)** for portfolio- and stock-level risk forecasting using Cholesky-decomposed correlated shocks
-* Reduced simulated portfolio downside risk from **-29.02% (Equal-Weight) to -24.71% (50%-capped Optimal) 95% VaR**
-* Added **CAPM/alpha analysis** with a dynamically sourced risk-free rate (10-Year US Treasury yield, `^TNX`)
-* Added **Maximum Drawdown analysis** and a **transaction-cost-aware** (5 bps/trade) rebalancing backtest
+* Out-of-sample **Sharpe ratio of 0.89** (cumulative return 379.7%) on a held-out 2021–2025 window, vs **0.52** for the S&P 500 and **0.53** for QQQ
+* Portfolio weights are estimated **only on 2016–2020 data**; the 2021–2025 evaluation window is never used to fit them
+* Efficient Frontier built from **20,000** randomly sampled long-only portfolios (Dirichlet sampling)
+* **10,000 correlated Monte Carlo paths** (GBM with Cholesky decomposition) for portfolio risk, giving a 95% VaR of **−7.29%** for equal-weight and **−5.57%** for the max-Sharpe portfolio
+* Single-stock **NVDA Monte Carlo** with a 99% simulated VaR of **−46.05%**
+* Average pairwise correlation of **0.541** across the seven stocks; normality rejected for all seven (D'Agostino–Pearson, p < 0.0001)
 
 ---
 
 ## Project Objective
 
-Most stock analyses focus only on returns. This project evaluates investments through a broader quantitative framework that incorporates:
-
-* Return
-* Risk
-* Diversification
-* Portfolio Optimization
-* Downside Risk
-* Future Uncertainty
-
-The goal is to determine whether the Magnificent 7 can deliver superior risk-adjusted performance and how capital should be allocated across them.
+Most stock analyses focus on returns alone. This project evaluates the Magnificent 7 through a broader framework covering return, risk, diversification, portfolio optimization, downside risk, and out-of-sample validation. The central question is whether optimized weights estimated on historical data still deliver good risk-adjusted performance on data they were not fitted to.
 
 ---
 
 ## Dataset
 
-| Parameter    | Details                                  |
-| ------------ | ----------------------------------------- |
-| Source       | Yahoo Finance (`yfinance`)               |
-| Stocks       | AAPL, GOOG, META, AMZN, MSFT, NVDA, TSLA |
-| Benchmarks   | S&P 500 (`^GSPC`), QQQ ETF               |
-| Risk-Free Rate | 10-Year US Treasury Yield (`^TNX`), sourced dynamically |
-| Time Horizon | 5 Years (2021–2025)                      |
-| Frequency    | Daily Adjusted Closing Prices            |
-| Estimation Window | 2021–2023 (used to fit portfolio weights) |
-| Evaluation Window  | 2024–2025 (held out for Monte Carlo, VaR, backtest) |
+| Parameter | Details |
+|---|---|
+| Source | Yahoo Finance (`yfinance`), daily adjusted closing prices |
+| Stocks | AAPL, GOOG, META, AMZN, MSFT, NVDA, TSLA |
+| Benchmarks | S&P 500 (`^GSPC`), QQQ ETF |
+| Full history | 2016–2025 (2,514 trading days) |
+| Estimation window | 2016–2020 (fits optimizer weights and Monte Carlo parameters) |
+| Evaluation window | 2021–2025 (held out; out-of-sample tests) |
+| Risk-free rate | 5.0% annual (fixed assumption) |
+| Annualization | 252 trading days |
 
-The selected period captures multiple market environments, including the COVID recovery, the 2022 rate-hike-driven correction, and the AI-led technology rally.
+Descriptive statistics (return, volatility, Beta, Sharpe, correlation, drawdown, CAPM) use the full 2016–2025 history. The train/test split applies to every model that is fitted and every decision that is made.
 
 ---
 
 ## Analysis Pipeline
 
-### 1. Exploratory Data Analysis
-* Historical price trends
-* Normalized growth comparison (Base = 100)
-* SMA vs EMA trend analysis (10/25/50-day, Google deep dive)
-* Daily return distributions
-
-### 2. Statistical Analysis
-* Daily return calculation
-* D'Agostino-Pearson normality testing (K² test) with Q-Q plots
-* Volatility analysis
-* Correlation heatmap
-
-### 3. Risk & Performance Metrics
-* Annualized Return
-* Annualized Volatility
-* Beta
-* Sharpe Ratio
-* CAPM Expected Return
-* Jensen-style Alpha
-
-### 4. Benchmark Comparison
-Performance comparison against:
-* S&P 500
-* QQQ ETF
-
-Additional evaluation:
-* Cumulative excess return vs. each benchmark
-* Maximum Drawdown
-
-### 5. Portfolio Optimization
-Using Modern Portfolio Theory (Markowitz Framework), fit on the 2021–2023 estimation window only:
-* Simulated **20,000 random portfolios** via constrained Dirichlet sampling
-* Calculated Return, Volatility, and Sharpe Ratio for each
-* Constructed the Efficient Frontier
-* Reported both the **unconstrained** maximum-Sharpe portfolio (diagnostic) and a **50% single-stock-cap** maximum-Sharpe portfolio (final allocation) to make the concentration trade-off explicit
-
-### 6. Monte Carlo Risk Forecasting
-* Geometric Brownian Motion (GBM), driven by historical daily log-return mean/volatility
-* Cholesky decomposition of the log-return covariance matrix for correlated multi-asset simulation
-* **10,000 future paths** over a 1-year (252-trading-day) horizon, simulated forward from the 2024 evaluation start date
-* Individual NVDA price-path simulation as a single-stock deep dive
-
-### 7. Value at Risk (VaR)
-* Portfolio 95% VaR (5th percentile of simulated 1-year return distribution)
-* Individual NVDA 99% VaR
-* Downside risk comparison between Equal-Weight and 50%-capped Optimized portfolios
-
-### 8. Portfolio Backtesting
-Comparison over the 2024–2025 evaluation window, including a 5-bps-per-trade transaction cost assumption:
-* Buy & Hold
-* Monthly Rebalancing
-
-to evaluate diversification benefits, turnover cost, and long-term performance.
+1. **Exploratory data analysis:** price trends, normalized growth (base 100), SMA/EMA trend analysis (10/25/50-day, with a Google deep dive)
+2. **Statistical tests:** daily return distributions, D'Agostino–Pearson normality tests, Q-Q plots, correlation heatmap
+3. **Risk and return:** annualized return and volatility, Beta, Sharpe ratio
+4. **Benchmarking:** equal-weight M7 vs S&P 500 and QQQ, cumulative excess return, maximum drawdown
+5. **CAPM:** expected return and Jensen-style alpha per stock
+6. **Portfolio optimization:** Modern Portfolio Theory fitted on 2016–2020 (20,000 Dirichlet portfolios, SLSQP maximum-Sharpe and minimum-variance solutions)
+7. **Out-of-sample validation:** fitted weights applied to 2021–2025 and compared against equal-weight, S&P 500 and QQQ
+8. **Monte Carlo risk forecasting:** NVDA single-stock GBM (10,000 paths) and correlated seven-stock simulation (10,000 paths, 2016–2020 parameters, starting from January 2021 prices)
+9. **Value at Risk:** 95% VaR and CVaR for equal-weight and max-Sharpe portfolios; 99% VaR for NVDA
+10. **Rebalancing backtest:** monthly rebalancing vs constant-weight daily rebalancing over 2021–2025, with no transaction costs
 
 ---
 
 ## Key Results
 
-| Metric                                   | Result     |
-| ----------------------------------------- | ---------- |
-| M7 Equal-Weight Cumulative Return          | +252.6%    |
-| S&P 500 Cumulative Return                  | +85.0%     |
-| QQQ Cumulative Return                      | +104.7%    |
-| M7 Maximum Drawdown                        | -49.4%     |
-| S&P 500 Maximum Drawdown                   | -25.4%     |
-| QQQ Maximum Drawdown                       | -35.1%     |
-| Portfolios Simulated                       | 20,000     |
-| Monte Carlo Paths                          | 10,000     |
-| Unconstrained Max-Sharpe                   | 1.025      |
-| 50%-Capped Max-Sharpe (final portfolio)    | 0.980      |
-| 50%-Capped Annualized Return               | 40.8%      |
-| 50%-Capped Annualized Volatility           | 37.3%      |
-| Equal-Weight Portfolio 95% VaR             | -29.0%     |
-| 50%-Capped Optimal Portfolio 95% VaR       | -24.7%     |
-| NVDA 99% VaR (1-yr simulated)              | -49.5%     |
-| Monthly Rebalancing Return (net of costs)  | +106.9%    |
-| Buy & Hold Return                          | +107.2%    |
+**Benchmark comparison (2016–2025, full period)**
 
-Final 50%-capped optimal allocation: **50% MSFT / 50% NVDA** (all other names at 0%, driven by the concentration cap binding on the two highest-Sharpe names in the estimation window).
+| Metric | M7 Equal-Weight | S&P 500 | QQQ |
+|---|---:|---:|---:|
+| Cumulative return | +2,260.4% | +240.1% | +503.2% |
+| Maximum drawdown | −49.39% | −33.92% | −35.12% |
+
+**Individual stocks (2016–2025, annualized)**
+
+| Stock | Return | Volatility | Beta | Sharpe | CAPM alpha |
+|---|---:|---:|---:|---:|---:|
+| AAPL | 28.67% | 29.05% | 1.208 | 0.815 | +12.88% |
+| GOOG | 25.63% | 28.75% | 1.143 | 0.718 | +10.43% |
+| META | 26.27% | 38.52% | 1.306 | 0.552 | +9.61% |
+| AMZN | 25.23% | 32.80% | 1.175 | 0.617 | +9.75% |
+| MSFT | 26.76% | 26.76% | 1.181 | 0.813 | +11.22% |
+| NVDA | 67.19% | 49.89% | 1.800 | 1.247 | +46.12% |
+| TSLA | 51.68% | 59.28% | 1.605 | 0.787 | +32.35% |
+
+S&P 500 annualized return in this sample: 13.93%. Risk-free rate: 5.0%.
+
+**Out-of-sample performance (2021–2025, weights fitted on 2016–2020)**
+
+| Strategy | Annualized return | Volatility | Sharpe | Cumulative return | Max drawdown |
+|---|---:|---:|---:|---:|---:|
+| Max-Sharpe | 38.61% | 37.71% | **0.89** | **379.74%** | −54.00% |
+| Min-Variance | 23.88% | 25.98% | 0.73 | 177.41% | −40.42% |
+| Equal-Weight | 29.90% | 30.26% | 0.82 | 252.63% | −49.39% |
+| S&P 500 | 13.80% | 16.96% | 0.52 | 84.98% | −25.43% |
+| QQQ | 16.96% | 22.68% | 0.53 | 104.66% | −35.12% |
+
+In-sample Sharpe for the max-Sharpe portfolio was 1.542 and fell to 0.891 out of sample.
+
+**Optimized weights (fitted on 2016–2020, no position cap):** AAPL 18.65%, AMZN 18.90%, NVDA 36.62%, TSLA 25.83%; GOOG, META and MSFT receive zero weight.
+
+**Portfolio risk (correlated Monte Carlo, 2021 starting prices, 1-year horizon)**
+
+| Portfolio | Mean simulated return | 95% VaR | 95% CVaR |
+|---|---:|---:|---:|
+| Equal-Weight | 55.38% | −7.29% | −17.42% |
+| Max-Sharpe | 80.55% | −5.57% | −17.08% |
+
+The max-Sharpe portfolio's less-negative VaR mostly reflects its higher simulated mean return. Its CVaR is close to equal-weight's.
+
+**Single-stock NVDA Monte Carlo (10,000 paths, full-history parameters, from $186.06):** median one-year price $321.36; 5th–95th percentile range $142.43–$721.57; 99% simulated VaR −46.05%.
+
+**Rebalancing backtest (2021–2025, $100,000 start, no transaction costs):** monthly rebalancing finished at $349,472 (+249.5%); constant-weight daily rebalancing finished at $352,627 (+252.6%). The difference is small and is specific to this period.
 
 ---
 
 ## Major Findings
 
-* NVIDIA was the strongest performer across most return-based metrics during the study period (annualized return ~67%, Sharpe ~1.20, CAPM alpha ~+42%).
-* All seven stocks reject the normality assumption (D'Agostino-Pearson, p < 0.05), confirming fat-tailed return distributions — a key motivation for treating VaR as a distributional quantile rather than a hard bound.
-* The Magnificent 7 significantly outperformed both the S&P 500 and QQQ benchmarks, but with roughly double the maximum drawdown of the S&P 500.
-* Enforcing a 50% single-stock cap reduces the Sharpe Ratio only modestly (1.025 → 0.980) while controlling concentration risk versus the unconstrained optimizer, which would otherwise concentrate almost entirely in the top 1–2 names.
-* Fixing the look-ahead bias (fitting weights on 2021–2023 and evaluating strictly on 2024–2025) means the reported optimized-portfolio numbers reflect genuinely out-of-sample performance, not in-sample overfitting.
-* After accounting for a 5-bps transaction cost per trade, monthly rebalancing and buy-and-hold produced nearly identical net returns (106.9% vs 107.2%) over the evaluation window — rebalancing's diversification benefit was largely offset by turnover cost and by trimming the strongest performers during a persistent rally.
-* Positive correlations across all seven stocks (highest: MSFT–AMZN at 0.655) indicate limited diversification within the group alone.
+* **Concentration drives the historical return.** The M7 group outperformed both benchmarks over 2016–2025, but with a maximum drawdown about 15 points deeper than the S&P 500.
+* **Mean-variance optimization did not beat equal-weight out of sample on a risk-adjusted basis.** Out-of-sample Sharpe was 0.89 for max-Sharpe vs 0.82 for equal-weight. Its in-sample Sharpe of 1.54 decayed substantially.
+* **Diversification within the group is limited.** Every pairwise correlation is positive; the average is 0.541, with MSFT–GOOG highest (0.703) and TSLA–META lowest (0.335).
+* **Returns are not normally distributed.** Normality is rejected for all seven stocks with fat tails, so the GBM simulations are treated as baseline scenario models that likely understate tail risk.
+* **Historical alpha is sample-specific.** All seven stocks show positive CAPM alpha over 2016–2025, which likely reflects the retrospectively selected universe and omitted factors, not repeatable stock-picking skill.
+
+---
+
+## Limitations
+
+* **Survivorship and selection bias:** the Magnificent 7 was defined with hindsight, so the historical returns overstate what an investor could have achieved in advance.
+* **Daily rebalancing in the out-of-sample test:** fitted weights are applied to daily returns, which keeps the portfolio at constant weights. A buy-and-hold test would allow weights to drift. This is an implementation assumption and does not re-optimize on evaluation data.
+* **No transaction costs, taxes or market impact** are modeled in any backtest.
+* **Single five-year out-of-sample window:** the results describe one period and are not evidence of general performance.
+* **GBM assumptions:** the simulations assume normal log returns with constant drift and volatility, which the normality tests reject.
 
 ---
 
 ## Tech Stack
 
-* Python
-* Pandas
-* NumPy
-* SciPy
-* Matplotlib
-* Seaborn
-* yFinance
-* Jupyter Notebook
+Python, Pandas, NumPy, SciPy, Matplotlib, Seaborn, yFinance, Jupyter Notebook
 
 ---
 
